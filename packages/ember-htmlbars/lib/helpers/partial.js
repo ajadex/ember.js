@@ -60,6 +60,6 @@ export function partialHelper(params, hash, options, env) {
     });
   } else {
     var template = lookupPartial(this, templateName);
-    return template.render(this, env, options.morph.contextualElement);
+    return template.render(this, env, { contextualElement: options.morph.contextualElement }).fragment;
   }
 }

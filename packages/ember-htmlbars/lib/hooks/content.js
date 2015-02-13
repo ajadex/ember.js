@@ -7,8 +7,8 @@ import { appendSimpleBoundView } from "ember-views/views/simple_bound_view";
 import { isStream } from "ember-metal/streams/utils";
 import lookupHelper from "ember-htmlbars/system/lookup-helper";
 
-export default function content(env, morph, view, path) {
-  var helper = lookupHelper(path, view, env);
+export default function content(morph, env, scope, path) {
+  var helper = lookupHelper(path, scope.self, env);
   var result;
 
   if (helper) {
@@ -16,13 +16,13 @@ export default function content(env, morph, view, path) {
       morph: morph,
       isInline: true
     };
-    result = helper.helperFunction.call(view, [], {}, options, env);
+    result = helper.helperFunction.call(scope.self, [], {}, options, env);
   } else {
-    result = view.getStream(path);
+    result = scope.self.getStream(path);
   }
 
   if (isStream(result)) {
-    appendSimpleBoundView(env.data.view, morph, result);
+    appendSimpleBoundView(scope.self, morph, result);
   } else {
     morph.setContent(result);
   }

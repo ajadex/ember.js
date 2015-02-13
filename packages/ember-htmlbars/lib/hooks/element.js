@@ -7,17 +7,17 @@ import Ember from "ember-metal/core";
 import { read } from "ember-metal/streams/utils";
 import lookupHelper from "ember-htmlbars/system/lookup-helper";
 
-export default function element(env, domElement, view, path, params, hash) { //jshint ignore:line
-  var helper = lookupHelper(path, view, env);
+export default function element(morph, env, scope, path, params, hash) { //jshint ignore:line
+  var helper = lookupHelper(path, scope.self, env);
   var valueOrLazyValue;
 
   if (helper) {
     var options = {
-      element: domElement
+      element: morph.element
     };
-    valueOrLazyValue = helper.helperFunction.call(view, params, hash, options, env);
+    valueOrLazyValue = helper.helperFunction.call(scope.self, params, hash, options, env);
   } else {
-    valueOrLazyValue = view.getStream(path);
+    valueOrLazyValue = scope.self.getStream(path);
   }
 
   var value = read(valueOrLazyValue);
@@ -32,7 +32,7 @@ export default function element(env, domElement, view, path, params, hash) { //j
 
       attrValue = attrValue.replace(/^['"]/, '').replace(/['"]$/, '');
 
-      env.dom.setAttribute(domElement, attrName, attrValue);
+      env.dom.setAttribute(morph.element, attrName, attrValue);
     }
   }
 }

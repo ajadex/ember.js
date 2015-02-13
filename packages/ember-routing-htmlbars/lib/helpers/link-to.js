@@ -313,11 +313,11 @@ function linkToHelper(params, hash, options, env) {
       revision: 'Ember@VERSION_STRING_PLACEHOLDER',
       render: function(view, env) {
         var value = read(linkTitle) || "";
-        if (parseTextAsHTML) {
-          return value;
-        } else {
-          return env.dom.createTextNode(value);
+        if (!parseTextAsHTML) {
+          value =  env.dom.createTextNode(value);
         }
+
+        return { fragment: value };
       }
     };
   }
