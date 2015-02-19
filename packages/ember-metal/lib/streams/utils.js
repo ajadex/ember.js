@@ -27,7 +27,7 @@ export function isStream(object) {
  */
 export function subscribe(object, callback, context) {
   if (object && object.isStream) {
-    object.subscribe(callback, context);
+    return object.subscribe(callback, context);
   }
 }
 
@@ -179,12 +179,18 @@ export function concat(array, separator) {
     });
 
     for (i = 0, l=array.length; i < l; i++) {
-      subscribe(array[i], stream.notify, stream);
+      addDependency(stream, subscribe(array[i], stream.notify, stream));
     }
 
     return stream;
   } else {
     return array.join(separator);
+  }
+}
+
+export function addDependency(stream, dependency) {
+  if (dependency) {
+    stream.addDependency(dependency);
   }
 }
 

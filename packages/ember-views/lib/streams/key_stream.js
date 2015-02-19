@@ -12,6 +12,7 @@ import Stream from "ember-metal/streams/stream";
 import { read, isStream } from "ember-metal/streams/utils";
 
 function KeyStream(source, key) {
+  Ember.assert("KeyStream error: source must be a stream", isStream(source));
   Ember.assert("KeyStream error: key must be a non-empty string", typeof key === 'string' && key.length > 0);
   Ember.assert("KeyStream error: key must not have a '.'", key.indexOf('.') === -1);
 
@@ -20,9 +21,7 @@ function KeyStream(source, key) {
   this.obj = undefined;
   this.key = key;
 
-  if (isStream(source)) {
-    source.subscribe(this._didChange, this);
-  }
+  this.addDependency(source.subscribe(this._didChange, this));
 }
 
 KeyStream.prototype = create(Stream.prototype);
@@ -56,18 +55,16 @@ merge(KeyStream.prototype, {
   },
 
   setSource: function(nextSource) {
-    Ember.assert("KeyStream error: source must be an object", typeof nextSource === 'object');
+    Ember.assert("KeyStream error: source must be a stream", isStream(nextSource));
 
     var prevSource = this.source;
 
     if (nextSource !== prevSource) {
-      if (isStream(prevSource)) {
-        prevSource.unsubscribe(this._didChange, this);
+      if (this.dependencies && this.dependencies.length === 1) {
+        this.dependencies.pop()();
       }
 
-      if (isStream(nextSource)) {
-        nextSource.subscribe(this._didChange, this);
-      }
+      this.addDependency(nextSource.subscribe(this._didChange, this));
 
       this.source = nextSource;
       this.notify();
@@ -80,11 +77,9 @@ merge(KeyStream.prototype, {
 
   _super$destroy: Stream.prototype.destroy,
 
-  destroy: function() {
-    if (this._super$destroy()) {
-      if (isStream(this.source)) {
-        this.source.unsubscribe(this._didChange, this);
-      }
+  destroy: function(prune) {
+    if (this._super$destroy(prune)) {
+      this.source.removeChild(this.key);
 
       if (this.obj && typeof this.obj === 'object') {
         removeObserver(this.obj, this.key, this, this._didChange);

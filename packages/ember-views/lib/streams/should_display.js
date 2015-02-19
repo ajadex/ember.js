@@ -2,12 +2,12 @@ import Stream from "ember-metal/streams/stream";
 import {
   read,
   subscribe,
-  unsubscribe,
   isStream
 } from "ember-metal/streams/utils";
 import create from 'ember-metal/platform/create';
 import { get } from "ember-metal/property_get";
 import { isArray } from "ember-metal/utils";
+import { addDependency } from "ember-metal/streams/utils";
 
 export default function shouldDisplay(predicate) {
   if (isStream(predicate)) {
@@ -30,8 +30,9 @@ function ShouldDisplayStream(predicateStream) {
   this.predicateStream = predicateStream;
   this.isTruthyStream = predicateStream.get('isTruthy');
   this.lengthStream = undefined;
-  subscribe(this.predicateStream, this.notify, this);
-  subscribe(this.isTruthyStream, this.notify, this);
+  this.predicateUnsubscribe = subscribe(this.predicateStream, this.notify, this);
+  this.truthyUnsubscribe = subscribe(this.isTruthyStream, this.notify, this);
+  this.lengthUnsubscribe = null;
 }
 
 ShouldDisplayStream.prototype = create(Stream.prototype);
@@ -44,13 +45,14 @@ ShouldDisplayStream.prototype.valueFn = function() {
   if (newPredicate !== oldPredicate) {
 
     if (this.lengthStream && !newIsArray) {
-      unsubscribe(this.lengthStream, this.notify, this);
+      this.lengthUnsubscribe(true);
       this.lengthStream = undefined;
     }
 
     if (!this.lengthStream && newIsArray) {
       this.lengthStream = this.predicateStream.get('length');
-      subscribe(this.lengthStream, this.notify, this);
+      var lengthUnsubscribe = subscribe(this.lengthStream, this.notify, this);
+      if (lengthUnsubscribe) { this.lengthUnsubscribe = lengthUnsubscribe; }
     }
     this.oldPredicate = newPredicate;
   }
@@ -66,4 +68,16 @@ ShouldDisplayStream.prototype.valueFn = function() {
   }
 
   return !!newPredicate;
+};
+
+ShouldDisplayStream.prototype._super$destroy = Stream.prototype.destroy;
+
+ShouldDisplayStream.prototype.destroy = function(prune) {
+  if (this.state !== 'destroyed') {
+    addDependency(this, this.predicateUnsubscribe);
+    addDependency(this, this.truthyUnsubscribe);
+    addDependency(this, this.lengthUnsubscribe);
+
+    return this._super$destroy(prune);
+  }
 };
