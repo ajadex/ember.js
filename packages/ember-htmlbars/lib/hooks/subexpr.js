@@ -43,7 +43,7 @@ merge(SubexprStream.prototype, {
       hash[prop] = read(sourceHash[prop]);
     }
 
-    return this.helper(params, hash, {});
+    return this.helper(params, hash, { template: {}, inverse: {} });
   },
 
   _super$subscribe: Stream.prototype.subscribe,

@@ -3,12 +3,7 @@
 @submodule ember-htmlbars
 */
 
-//import Ember from "ember-metal/core"; // Ember.warn, Ember.assert
-//import { read } from "ember-metal/streams/utils";
-//import { readViewFactory } from "ember-views/streams/utils";
-//import View from "ember-views/views/view";
-//import mergeViewBindings from "ember-htmlbars/system/merge-view-bindings";
-//import appendTemplatedView from "ember-htmlbars/system/append-templated-view";
+import { get } from "ember-metal/property_get";
 
 /**
   `{{view}}` inserts a new instance of an `Ember.View` into a template passing its
@@ -185,38 +180,11 @@
   @method view
   @for Ember.Handlebars.helpers
 */
-/*export function viewHelper(params, hash, options, env) {
-  Ember.assert(
-    "The `view` helper expects zero or one arguments.",
-    params.length <= 2
-  );
-
-  var container = this.container || read(this._keywords.view).container;
-  var viewClassOrInstance;
-  if (params.length === 0) {
-    if (container) {
-      viewClassOrInstance = container.lookupFactory('view:toplevel');
-    } else {
-      viewClassOrInstance = View;
-    }
-  } else {
-    viewClassOrInstance = readViewFactory(params[0], container);
-  }
-
-  var props = {
-    helperName: options.helperName || 'view'
-  };
-
-  if (options.template) {
-    props.template = options.template;
-  }
-
-  mergeViewBindings(this, props, hash);
-  appendTemplatedView(this, options.morph, viewClassOrInstance, props);
-}*/
 
 export default function view(params, hash, options) {
-  if (hash.view.template) {
-    this.withLayout(hash.view.template, hash.view);
+  if (this.yield) {
+    this.yield();
+  } else {
+    this.withLayout(get(hash.view, 'template'), hash.view);
   }
 }
